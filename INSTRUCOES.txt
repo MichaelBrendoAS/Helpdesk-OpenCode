@@ -1,0 +1,176 @@
+HELPDESK-OPENCODE — INSTRUÇÕES DE USO
+========================================
+
+O QUE É
+  O Helpdesk-OpenCode é um agente de IA que enxerga a tela do seu
+  computador e executa cliques, digitação e atalhos de teclado até
+  terminar a tarefa que você pedir. Por padrão ele executa tudo
+  automaticamente (o switch "Executar sem confirmar cada ação" já vem
+  ligado; ações destrutivas sempre pedem confirmação). Ao abrir, ele
+  também varre o computador — lista os programas instalados e o sistema
+  operacional — e sabe abrir qualquer aplicativo pedido ("abra o
+  Google Chrome").
+  É uma cópia do Helpdesk original que usa uma API GRATUITA em vez da
+  API da Anthropic — ideal para testar sem gastar.
+
+O QUE É NECESSÁRIO PARA EXECUTAR
+  * Windows 10 ou 11, 64 bits — NÃO precisa instalar Python nem nada além.
+  * Conexão com a internet (as telas são enviadas para a API de IA).
+  * Chave de API gratuita do Gemini — https://aistudio.google.com/apikey
+    (basta ter uma conta Google; não precisa de cartão de crédito).
+  * Cerca de 100 MB de espaço em disco.
+  * GPU é opcional: sem ela o preview funciona em modo mais lento (GDI).
+
+COMO USAR — PRIMEIRA VEZ
+  1. Dê dois cliques em Helpdesk-OpenCode.exe.
+     Se o Windows mostrar "Windows protegeu o computador" (SmartScreen),
+     clique em "Mais informações" e depois "Executar assim mesmo".
+  2. Clique em ⚙ Configurações, cole sua chave (gratuita, de
+     https://aistudio.google.com/apikey) e Salvar.
+     A chave fica gravada em um arquivo .env ao lado do .exe.
+
+COMO USAR — TODO DIA
+  1. Escreva a tarefa em português no campo "Tarefa"
+     (ex.: "abra o navegador e pesquise por clima em São Paulo").
+  2. Clique em ▶ Executar (ou pressione Ctrl+Enter). O agente abre
+     qualquer programa pedido pelo nome (inventário do seu PC).
+  3. As ações executam SOZINHAS por padrão; desligue o switch
+     "Executar sem confirmar cada ação" para aprovar cada uma —
+     ações destrutivas (excluir, apagar) sempre perguntam antes.
+  4. Acompanhe o painel "O que o agente vê" (preview ao vivo, ~30 fps)
+     e o log "Atividade" (passos, respostas e erros em tempo real).
+     Cada passo mostra "🧠 ..." = o que a IA identificou na tela (janela,
+     botão, visor); ela executa TODOS os comandos do seu pedido, usa o
+     aplicativo que você citou e só conclui quando VÊ o resultado.
+  5. ■ Parar encerra após o passo atual.
+  6. Feche a janela para sair (pede confirmação se houver tarefa rodando).
+
+VÁRIOS MONITORES (SEGUNDO MONITOR)
+  No topo da janela (🖥 Monitor) ou em ⚙ Configurações, o seletor
+  "Monitor para ler as tarefas" escolhe qual tela a IA lê e onde ela
+  clica (cada opção mostra a resolução e o principal marcado com
+  "(principal)"). A troca vale na hora e fica salva no .env (CUA_MONITOR).
+  * A janela do programa pode ficar em qualquer monitor: ela lembra a
+    posição na próxima abertura (apague CUA_WIN_GEOMETRY no .env para
+    voltar ao centro da tela principal).
+  * Gravações e repetições de rotina funcionam em qualquer monitor (o
+    mouse é registrado em coordenadas globais do Windows).
+  * CUIDADO: mantenha a mesma escala de tela (100%, 125%...) nos dois
+    monitores — escalas diferentes podem deslocar os cliques.
+
+TIME DE APIs (GROQ + GEMINI) - MAIS RAPIDO E SEM CAIR
+  Sem chave Groq, tudo continua no Gemini como sempre. Com a chave
+  Groq (gratis em console.groq.com/keys, so e-mail, sem cartao) colada
+  em ⚙ Configuracoes, o time inteiro liga: os screenshots (agente e
+  assistente) e o texto das rotinas vao para o Groq - o provedor mais
+  rapido - e, se ele falhar (fila ou erro), o Gemini responde na hora
+  como plano B, sem voce fazer nada.
+  * Visao: Llama 4 Scout (le a tela). Texto: Llama 3.3 70B.
+  * Modelos ajustaveis no .env: CUA_GROQ_VISION_MODEL e
+    CUA_GROQ_TEXT_MODEL. Limites gratis do Groq: 30 req/min e
+    14.400 req/dia - folgado para o agente e para o assistente.
+
+ASSISTENTE EM TEMPO REAL (leitura da tela)
+  Na aba "💡 Assistente" (que inicia DESLIGADA — ligue pelo switch quando quiser; chave
+  configurada), a IA lê a tela a cada poucos segundos e mostra:
+    * CONTEXTO — o que o cliente quer e o que está em aberto;
+    * RESPOSTA PRONTA — use "📋 Copiar resposta" e cole no chat;
+    * PRÓXIMO PASSO — use "↗ Usar como tarefa" para o agente executar.
+  O intervalo (5 s a 60 s) é trocado no seletor "a cada" e é o tempo
+  MÍNIMO entre leituras: some a fila da API (o status mostra quanto
+  cada leitura levou, ex.: "✔ Leitura 14:02 (38 s)"). O assistente
+  guarda um resumo entre leituras (memória), pausa sozinho enquanto uma
+  tarefa roda; com fila/erro 503 ele insiste (até 10 vezes) e só
+  desliga na hora com chave ou modelo errado. Cada leitura consome
+  tokens: intervalos maiores gastam bem menos.
+
+  * Enquanto a tela não muda, o painel só atualiza o relógio e NÃO
+    chama a IA (zero tokens, zero chamadas ao servidor); mudou, consultou.
+  * Recusa da fila (503) vira espera crescente (10, 20, 40, 60 s) — ele
+    não martela o servidor e mantém a última análise boa na tela.
+  * O assistente NÃO liga sozinho na abertura: só roda quando você
+    aciona o switch — e pausa sozinho durante as tarefas do agente.
+
+MANDAR A RESPOSTA PRO CLIENTE (a partir do 💡 Assistente)
+  Quando a leitura terminar com uma RESPOSTA PRONTA, clique em
+  📨 Mandar pro cliente. O programa PERGUNTA antes (mostra a
+  janela de destino e um trecho do texto) e, no "Mandar agora",
+  ele mesmo faz tudo:
+    1. traz o chat do cliente pra frente — a última janela ativa
+       que não é deste programa (a que você usava antes);
+    2. cola a resposta (Ctrl+V — acentos e emojis intactos);
+    3. aperta Enter (envia na maioria dos chats).
+  Leva ~2 s: deixe o cursor piscando na CAIXA DE MENSAGEM do chat
+  antes de mandar e não mexa no mouse/teclado durante o envio. Seu
+  clipboard (o que você tinha copiado) é devolvido depois. Se o
+  seu chat não envia com Enter, o texto fica colado — é só clicar
+  em Enviar. É tudo LOCAL: não usa IA nem gasta cota.
+
+GRAVAÇÃO DE ROTINAS (ROTINA DO DIA)
+  Na aba "⏺ Rotinas":
+  1. Clique em ⏺ Gravar rotina, use o PC normalmente (cliques, teclas,
+     rolagem e as janelas/sites que você acessa) e clique em ⏹ Parar.
+     A gravação é salva na pasta "rotinas" ao lado do programa.
+  2. A IA nomeia e descreve cada gravação sozinha.
+  3. 🧠 Analisar tudo com IA lê suas gravações e cria a "ROTINA DO DIA"
+     (📚) combinando o que você repete no dia a dia, com insights.
+  4. Escolha quantas vezes repetir (o número ao lado de ▶) e clique ▶.
+     ■ Parar repetição ou mover o mouse para o canto superior esquerdo
+     interrompe na hora.
+  Repetições usam o mouse e o teclado FÍSICOS: não use a máquina
+  enquanto uma repetição (▶) estiver ativa.
+
+ATALHO PELO CHAT: escreva o NOME da rotina (como aparece na lista)
+no campo "Tarefa" — ex.: "Rotina X 5 vezes" — e clique ▶ Executar:
+ela repete 5x na hora, SEM chamar a IA (aceita "5x", "duas vezes";
+sem número, repete 1 vez). Serve também para a 📚 Rotina do Dia.
+Se não casar com nenhum nome salvo, a tarefa segue normalmente
+para o agente.
+
+VELOCIDADE E PRECISÃO (otimizações aplicadas)
+  * O agente pode executar até 3 ações em UMA chamada de IA (lote), quando
+    dá para prever a sequência (ex.: clicar no campo e já digitar) —
+    tarefas simples ficam até 3x mais rápidas.
+  * Cliques são diretos na coordenada (sem animação) e a pausa entre
+    ações é mínima; durante tarefa/repetição o preview pausa para
+    liberar a CPU — o painel atualiza a cada ação executada.
+  * A repetição (▶) usa timer de 1 ms no Windows: reproduz exatamente o
+    ritmo e o traçado que você gravou.
+  * Dica: mantenha o 💡 Assistente ligado — ele mantém a conexão "morna"
+    e a primeira tarefa do dia costuma vir mais rápido.
+
+  * Cada chamada de IA pede esforço mínimo de raciocínio
+    (reasoning_effort=minimal): no bench respondeu ~2x mais rápido;
+    se a API não aceitar o parâmetro, o programa repete sozinho sem ele.
+  * ROTINA PELO CHAT não usa IA nenhuma (roda local) — é instantânea
+    mesmo com a fila do nível gratuito.
+  * A fila do gratuito varia com a hora do dia (de ~2 s a dezenas de
+    segundos nos picos) — por isso agrupamos até 3 ações por chamada:
+    menos chamadas, menos espera.
+
+SOBRE A COTA GRATUITA
+  A API padrão é a do Gemini (Google AI Studio), que tem nível gratuito
+  com limite diário de requisições/tokens. O modelo padrão é o
+  gemini-3.5-flash-lite (o mais rápido dos testados: ~2 s por chamada com fila leve — em picos do gratuito pode ir a dezenas de segundos). Para testes normais
+  dá e sobra;
+  se aparecer erro 429 (limite atingido), espere a cota do dia renovar
+  (meia-noite, horário de Brasília) ou troque o modelo nas configurações.
+  Se aparecer erro 404 dizendo que o modelo "no longer available", é
+  porque o Google aposentou aquele modelo — troque CUA_MODEL pelo atual.
+  Outra API compatível com OpenAI (MiMo, OpenRouter, Groq...) também
+  funciona: edite CUA_BASE_URL e CUA_MODEL no arquivo .env.
+
+CUIDADOS
+  * Não use o mouse/teclado enquanto o agente roda ou uma repetição (▶)
+    está ativa: controlam os periféricos FÍSICOS.
+  * As rotinas gravadas ficam na pasta "rotinas" ao lado do programa.
+  * Mova o mouse para o canto superior esquerdo para abortar uma ação
+    (failsafe).
+  * Cada passo consome tokens da API: limite em ⚙ Configurações →
+    Máx. passos.
+  * O agente não faz nada destrutivo (excluir arquivos, desligar, apagar
+    dados) sem pedido explícito na tarefa.
+
+DÚVIDAS
+  Clique em ❓ Como usar dentro do programa — as instruções estão
+  sempre disponíveis lá, mesmo sem este arquivo.
