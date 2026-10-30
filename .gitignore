@@ -1,0 +1,22 @@
+# Segredos: NUNCA subir
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build (o .exe vai em "Releases", não no repositório)
+build/
+dist/
+*.exe
+
+# Gerados / dados locais da sua máquina
+opencode.json
+inventory.json
+@AutomationLog.txt
+logs/
+tools/
+.opencode_home/
+rotinas/*.json
